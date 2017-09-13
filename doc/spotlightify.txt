@@ -1,0 +1,101 @@
+*spotlightify.txt*     Highlighted search results, improved        *spotlightify*
+
+                            spotlightify MANUAL
+
+1. About spotlightify                              |spotlightify-about|
+2. Quick Start                                     |spotlightify-quickstart|
+3. Key Mappings                                    |spotlightify-keymappings|
+4. Options                                         |spotlightify-options|
+5. Changelog                                       |spotlightify-changelog|
+6. Contribute                                      |spotlightify-contribute|
+7. License                                         |spotlightify-license|
+
+=============================================================================
+ABOUT SPOTLIGHTIFY                                         *spotlightify-about*
+
+Vim got the native `hlsearch` option to turn on highlighted search results;
+unfortunately, you have to manually turn it off once you are done searching.
+In addition, it can be hard to keep track of where you are if there are
+many occurrences on screen.
+
+This plugin automatically turns off search highlighting when the cursor moves
+away from a search result occurrence, and highlight the current position in a
+different color.
+
+=============================================================================
+QUICK START                                           *spotlightify-quickstart*
+
+1. Install the plugin Eg. with Pathogen:
+>
+   cd ~/.vim/bundle && git clone https://github.com/fcpg/vim-spotlightify
+<
+2. Highlighting is automatically turned on and off when appropriate.
+   Use `c<Tab>` (or `g<Tab>` in visual mode) to search & replace the current
+   word. Replace the next occurrences with |.| (dot).
+   `c<S-Tab>` and `g<S-Tab>` (with Shift-Tab) search & replace in reverse
+   direction (backward).
+
+=============================================================================
+KEY MAPPINGS                                         *spotlightify-keymappings*
+
+- `<Plug>(spotlightify)searchreplacefwd`
+  Start a repeatable search&replace on current word (or selection, in visual
+  mode). Repeat replacement on next occurrence with native |.| (dot).
+  Available in normal and visual mode.
+  To be used in your own maps eg.:
+>
+   nmap cx <Plug>(spotlightify)searchreplacefwd
+<
+- `<Plug>(spotlightify)searchreplaceBak`
+  Same as above, in reverse (backward) direction.
+
+- `c<Tab>`
+  Default normal map for `<Plug>(spotlightify)searchreplacefwd`
+  Not set if `g:splfy_setmaps` is 0, or if the search&replace is already
+  mapped elsewhere, or if there already is a normal map on `c<Tab>`.
+
+- `c<S-Tab>`
+  Same as above, in reverse (backward) direction.
+
+- `g<Tab>`
+- `g<S-Tab>`
+  Default visual maps equivalent for `c<Tab>` and `c<S-Tab>`
+  Same conditions as normal maps apply.
+
+
+=============================================================================
+OPTIONS                                                  *spotlightify-options*
+
+g:splfy_curmatch                                             *g:splfy_curmatch*
+  Set to 1 to highlight current match differently.
+  Default: 1
+
+g:splfy_curmatch_hlgroup                             *g:splfy_curmatch_hlgroup*
+  Set the highlight group used for the current match.
+  Default: IncSearch
+
+g:splfy_keephls                                               *g:splfy_keephls*
+  Set to 1 to keep hlsearch enabled until disabled or next search.
+  Default: 0
+
+g:splfy_setmaps                                               *g:splfy_setmaps*
+  Set to 0 to prevent defaults maps to `<Plug>(spotlightify)searchreplace`
+  Default: 1
+
+=============================================================================
+CHANGELOG                                              *spotlightify-changelog*
+
+[1.0] - 2017-09-14
+  - Initial release
+
+=============================================================================
+CONTRIBUTE                                            *spotlightify-contribute*
+
+Contribute on [Github](https://github.com/fcpg/vim-spotlightify)
+
+=============================================================================
+LICENSE                                                  *spotlightify-license*
+
+[Attribution-ShareAlike 4.0 Int.](https://creativecommons.org/licenses/by-sa/4.0/)
+
+ vim: set expandtab sts=2 ts=2 sw=2 tw=78 ft=help norl:
