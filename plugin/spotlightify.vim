@@ -11,6 +11,8 @@ let g:loaded_spotlightify = 1
 let s:save_cpo = &cpo
 set cpo&vim
 
+let g:splfy_debug = 0
+
 
 "----------------
 " Functions {{{1
@@ -47,19 +49,33 @@ endfun
 
 " s:CheckHL() {{{2
 function! s:CheckHL()
+  if g:splfy_debug
+    echom "CheckHL IN: ".@/
+          \ "[".get(b:, 'splfy_keephls', '')."]"
+          \ "[".get(b:, 'splfy_ctab_pat', '')."]"
+  endif
   if !v:hlsearch
+    if g:splfy_debug
+      echom "  CheckHL reset keephls: ".@/
+    endif
     let b:splfy_keephls = 0
   endif
   silent! if v:hlsearch
         \ || (has_key(b:, 'splfy_matches')
         \     && !empty(b:splfy_matches))
+        \ || has_key(b:, 'splfy_ctab_pat')
     if has_key(b:, 'splfy_ctab_pat')
           \ && b:splfy_ctab_pat !=# @/
       " new search
       let b:splfy_keephls = 0
+      unlet b:splfy_ctab_pat
     endif
-    if @/ ==# '' || !search('\%#\zs'.@/,'cnW')
+    if @/ ==# '' || (!search('\%#\zs'.@/,'cnW')
+          \ && !has_key(b:, 'splfy_ctab_pat'))
       " moved from a match, stop hls
+      if g:splfy_debug
+        echom "  CheckHL Stop: ".@/
+      endif
       if exists('b:splfy_cul_hlgroup')
         call <Sid>RestoreHLGroup('CursorLine', b:splfy_cul_hlgroup)
         unlet b:splfy_cul_hlgroup
@@ -67,6 +83,9 @@ function! s:CheckHL()
       endif
       call <SID>StopHL()
     else
+      if g:splfy_debug
+        echom "  CheckHL Start: ".@/
+      endif
       if get(g:, 'splfy_curmatch', 1)
         " on a match, special hili for current one
         if !&cursorline
@@ -80,28 +99,61 @@ function! s:CheckHL()
           let b:splfy_matches = {}
         endif
         if !has_key(b:splfy_matches, @/)
+          if g:splfy_debug
+            echom "  CheckHL matchadd: ".@/
+          endif
           let matchid = matchadd(
                 \ get(g:, 'splfy_curmatch_hlgroup', 'IncSearch'),
                 \ target_pat,
                 \ 101)
           let b:splfy_matches[@/] = matchid
+        else
+          if g:splfy_debug
+            echom "  CheckHL already in b:splfy_matches: ".@/
+          endif
         endif
         " redraw
       endif
     endif
+  else
+    if g:splfy_debug
+      echom "  CheckHL nop: ".@/
+    endif
+  endif
+  if g:splfy_debug
+    echom "CheckHL OUT: ".@/
   endif
 endfun
 
 " s:StopHL() {{{2
 function! s:StopHL()
-  call <SID>ClearMatches()
+  if g:splfy_debug
+    echom "StopHL IN: ".@/
+          \ "[".get(b:, 'splfy_keephls', '')."]"
+          \ "[".get(b:, 'splfy_ctab_pat', '')."]"
+  endif
+  if get(b:, 'splfy_ctab_pat', '') == ''
+    if g:splfy_debug
+      echom "  StopHL clearmatches: ".@/
+    endif
+    call <SID>ClearMatches()
+  endif
   if !v:hlsearch || mode() isnot 'n'
         \ || get(b:, 'splfy_keephls', 0)
         \ || get(g:, 'splfy_keephls', 0)
+    if g:splfy_debug
+      echom "StopHL OUT: ".@/
+    endif
     return
   else
     " xfer execution out of func, so that nohls be not reset
+    if g:splfy_debug
+      echom "  StopHL nohls: ".@/
+    endif
     silent! call feedkeys("\<Plug>(spotlightify)nohls", 'mi')
+  endif
+  if g:splfy_debug
+    echom "StopHL OUT: ".@/
   endif
 endfun
 
@@ -132,9 +184,17 @@ endfun
 
 " s:SplfyGn {{{2
 function! SplfyGn(dir)
-  let b:splfy_keephls=1
+  if g:splfy_debug
+    echom "SplfyGn IN: ".@/
+  endif
+  let b:splfy_ctab_pat = @/
+  let b:splfy_keephls = 1
   silent! set hls
+  " call <SID>CheckHL()
   silent! exe 'norm!' (a:dir==-1 ? 'gN' : 'gn')
+  if g:splfy_debug
+    echom "SplfyGn OUT: ".@/
+  endif
 endfun
 
 
@@ -144,25 +204,25 @@ endfun
 
 " Plugs {{{2
 nnoremap <silent> <Plug>(spotlightify)searchreplacefwd
-      \ :let b:splfy_keephls=1<cr>*g``:let b:splfy_ctab_pat=@/<cr>c:
-      \call SplfyGn(1)<cr>
+      \ :let b:splfy_keephls=1<cr>*g``c:
+      \let v:hlsearch=1<Bar>call SplfyGn(1)<cr>
 
       " \let b:splfy_keephls=1<Bar>set hls<Bar>norm! gn<cr>
 
 nnoremap <silent> <Plug>(spotlightify)searchreplacebak
-      \ :let b:splfy_keephls=1<cr>*g``:let b:splfy_ctab_pat=@/<cr>c:
-      \call SplfyGn(-1)<cr>
+      \ :let b:splfy_keephls=1<cr>*g``c:
+      \let v:hlsearch=1<Bar>call SplfyGn(-1)<cr>
       " \let b:splfy_keephls=1<Bar>set hls<Bar>norm! gN<cr>
 
 xnoremap <silent> <Plug>(spotlightify)searchreplacefwd
       \ :<C-u>let @/=strpart(getline('.'),
       \  col("'<")-1, (line('.')==line("'>")?col("'>"):col("$")) - col("'<")+1)
-      \<cr>c:call SplfyGn(1)<cr>
+      \<cr>c:let v:hlsearch=1<Bar>call SplfyGn(1)<cr>
 
 xnoremap <silent> <Plug>(spotlightify)searchreplacebak
       \ :<C-u>let @/=strpart(getline('.'),
       \  col("'<")-1, (line('.')==line("'>")?col("'>"):col("$")) - col("'<")+1)
-      \<cr>c:call SplfyGn(-1)<cr>
+      \<cr>c:let v:hlsearch=1<Bar>call SplfyGn(-1)<cr>
 
 
 " c/g<Tab> {{{2
