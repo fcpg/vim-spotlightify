@@ -53,7 +53,12 @@ function! s:CheckHL()
   silent! if v:hlsearch
         \ || (has_key(b:, 'splfy_matches')
         \     && !empty(b:splfy_matches))
-    if !search('\%#\zs'.@/,'cnW')
+    if has_key(b:, 'splfy_ctab_pat')
+          \ && b:splfy_ctab_pat !=# @/
+      " new search
+      let b:splfy_keephls = 0
+    endif
+    if @/ ==# '' || !search('\%#\zs'.@/,'cnW')
       " moved from a match, stop hls
       if exists('b:splfy_cul_hlgroup')
         call <Sid>RestoreHLGroup('CursorLine', b:splfy_cul_hlgroup)
@@ -139,13 +144,13 @@ endfun
 
 " Plugs {{{2
 nnoremap <silent> <Plug>(spotlightify)searchreplacefwd
-      \ :let b:splfy_keephls=1<cr>*g``c:
+      \ :let b:splfy_keephls=1<cr>*g``:let b:splfy_ctab_pat=@/<cr>c:
       \call SplfyGn(1)<cr>
 
       " \let b:splfy_keephls=1<Bar>set hls<Bar>norm! gn<cr>
 
 nnoremap <silent> <Plug>(spotlightify)searchreplacebak
-      \ :let b:splfy_keephls=1<cr>*g``c:
+      \ :let b:splfy_keephls=1<cr>*g``:let b:splfy_ctab_pat=@/<cr>c:
       \call SplfyGn(-1)<cr>
       " \let b:splfy_keephls=1<Bar>set hls<Bar>norm! gN<cr>
 
