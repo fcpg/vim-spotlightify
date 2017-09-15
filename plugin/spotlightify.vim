@@ -49,15 +49,12 @@ endfun
 
 " s:CheckHL() {{{2
 function! s:CheckHL()
-  if g:splfy_debug
-    echom "CheckHL IN: ".@/
-          \ "[".get(b:, 'splfy_keephls', '')."]"
-          \ "[".get(b:, 'splfy_ctab_pat', '')."]"
-  endif
+  call <Sid>Dbg("CheckHL IN: ".@/,
+        \ get(b:, 'splfy_keephls', ''),
+        \ get(b:, 'splfy_ctab_pat', '')
+        \)
   if !v:hlsearch
-    if g:splfy_debug
-      echom "  CheckHL reset keephls: ".@/
-    endif
+    call <Sid>Dbg("  CheckHL reset keephls:")
     let b:splfy_keephls = 0
   endif
   silent! if v:hlsearch
@@ -73,9 +70,7 @@ function! s:CheckHL()
     if @/ ==# '' || (!search('\%#\zs'.@/,'cnW')
           \ && !has_key(b:, 'splfy_ctab_pat'))
       " moved from a match, stop hls
-      if g:splfy_debug
-        echom "  CheckHL Stop: ".@/
-      endif
+      call <Sid>Dbg("  CheckHL stop hili:")
       if exists('b:splfy_cul_hlgroup')
         call <Sid>RestoreHLGroup('CursorLine', b:splfy_cul_hlgroup)
         unlet b:splfy_cul_hlgroup
@@ -83,9 +78,7 @@ function! s:CheckHL()
       endif
       call <SID>StopHL()
     else
-      if g:splfy_debug
-        echom "  CheckHL Start: ".@/
-      endif
+      call <Sid>Dbg("  CheckHL start hili:")
       if get(g:, 'splfy_curmatch', 1)
         " on a match, special hili for current one
         if !&cursorline
@@ -99,68 +92,52 @@ function! s:CheckHL()
           let b:splfy_matches = {}
         endif
         if !has_key(b:splfy_matches, @/)
-          if g:splfy_debug
-            echom "  CheckHL matchadd: ".@/
-          endif
+          call <Sid>Dbg("  CheckHL matchadd:")
           let matchid = matchadd(
                 \ get(g:, 'splfy_curmatch_hlgroup', 'IncSearch'),
                 \ target_pat,
                 \ 101)
           let b:splfy_matches[@/] = matchid
         else
-          if g:splfy_debug
-            echom "  CheckHL already in b:splfy_matches: ".@/
-          endif
+          call <Sid>Dbg("  CheckHL already in b:splfy_matches:")
         endif
         " redraw
       endif
     endif
   else
-    if g:splfy_debug
-      echom "  CheckHL nop: ".@/
-    endif
+    call <Sid>Dbg("  CheckHL nop:")
   endif
-  if g:splfy_debug
-    echom "CheckHL OUT: ".@/
-  endif
+    call <Sid>Dbg("CheckHL OUT:")
 endfun
 
 " s:StopHL() {{{2
 function! s:StopHL()
-  if g:splfy_debug
-    echom "StopHL IN: ".@/
-          \ "[".get(b:, 'splfy_keephls', '')."]"
-          \ "[".get(b:, 'splfy_ctab_pat', '')."]"
-  endif
+  call <Sid>Dbg("StopHL IN:",
+        \ get(b:, 'splfy_keephls', ''),
+        \ get(b:, 'splfy_ctab_pat', '')
+        \)
   if get(b:, 'splfy_ctab_pat', '') == ''
-    if g:splfy_debug
-      echom "  StopHL clearmatches: ".@/
-    endif
+    call <Sid>Dbg("  StopHL clearmatches:")
     call <SID>ClearMatches()
   endif
   if !v:hlsearch || mode() isnot 'n'
         \ || get(b:, 'splfy_keephls', 0)
         \ || get(g:, 'splfy_keephls', 0)
-    if g:splfy_debug
-      echom "StopHL OUT: ".@/
-    endif
+    call <Sid>Dbg("StopHL OUT:")
     return
   else
     " xfer execution out of func, so that nohls be not reset
-    if g:splfy_debug
-      echom "  StopHL nohls: ".@/
-    endif
+    call <Sid>Dbg("  StopHL nohls:")
     silent! call feedkeys("\<Plug>(spotlightify)nohls", 'mi')
   endif
-  if g:splfy_debug
-    echom "StopHL OUT: ".@/
-  endif
+  call <Sid>Dbg("StopHL OUT:")
 endfun
 
 " s:ChangedHLSearch() {{{2
 function! s:ChangedHLSearch(old, new)
   if a:old == 0 && a:new == 1
     " set hls
+    call <Sid>Dbg("ChangedHLSearch IN: set hls")
     noremap  <expr> <Plug>(spotlightify)nohls
           \ strpart(execute('nohlsearch'), 999) . ""
     noremap! <expr> <Plug>(spotlightify)nohls
@@ -170,6 +147,8 @@ function! s:ChangedHLSearch(old, new)
     autocmd Spotlightify InsertEnter * call <SID>StopHL()
   elseif a:old == 1 && a:new == 0
     " unset hls
+    call <Sid>Dbg("ChangedHLSearch IN: unset hls")
+
     call <SID>ClearMatches()
 
     unmap  <Plug>(spotlightify)nohls
@@ -178,22 +157,30 @@ function! s:ChangedHLSearch(old, new)
     autocmd! Spotlightify CursorMoved
     autocmd! Spotlightify InsertEnter
   else
+    call <Sid>Dbg("ChangedHLSearch IN: nop")
     return
   endif
 endfun
 
 " s:SplfyGn {{{2
 function! SplfyGn(dir)
-  if g:splfy_debug
-    echom "SplfyGn IN: ".@/
-  endif
+  call <Sid>Dbg("SplfyGn IN:")
   let b:splfy_ctab_pat = @/
   let b:splfy_keephls = 1
   silent! set hls
   " call <SID>CheckHL()
   silent! exe 'norm!' (a:dir==-1 ? 'gN' : 'gn')
+  call <Sid>Dbg("SplfyGn OUT:")
+endfun
+
+" s:Dbg {{{2
+function! s:Dbg(msg, ...)
   if g:splfy_debug
-    echom "SplfyGn OUT: ".@/
+    let m = a:msg." /".@/."/"
+    if a:0
+      let m .= " [".join(a:000, "] [")."]"
+    endif
+    echom m
   endif
 endfun
 
