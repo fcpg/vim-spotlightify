@@ -1,5 +1,10 @@
-Vim-Spotlightify
-=================
+```
+  A\_               _                      _      (o)
+ /`Y    \  /o._ ___(_`._  __|_|o _ |__|_o_|_     /   
+ \       \/ || | | ,_)|_)(_)|_||(_|| ||_| |\/    \   
+ ^                    |          _|        /     ^   
+```
+
 Spotlightify highlights your search results while you are navigating through
 them (with `n/N` and family), and automatically turn the highlighting off when
 you are done.
