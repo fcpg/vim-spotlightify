@@ -28,8 +28,9 @@ Use your favorite method:
 
 Acknowledgments
 ----------------
-Originally a fork from @romainl, in turn coming from the work of @purpleP,
-@chrisbra, @justinmk, @jamessan, and @ZyX-I.
+Originally a fork from @romainl `vim-cool`.
+
+Many thanks to igemnace on #vim for testing.
 
 License
 --------

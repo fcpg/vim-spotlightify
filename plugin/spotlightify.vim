@@ -11,7 +11,18 @@ let g:loaded_spotlightify = 1
 let s:save_cpo = &cpo
 set cpo&vim
 
+"------------
+" Debug {{{1
+"------------
 let g:splfy_debug = 0
+if 0
+append
+  " comment out all dbg calls
+  :g,\c^\s*call <Sid>Dbg(,s/call/"call/
+  " uncomment
+  :g,\c^\s*"call <Sid>Dbg(,s/"call/call/
+.
+endif
 
 
 "----------------
@@ -38,26 +49,26 @@ endfun
 
 " s:SetSplfyCursorLine {{{2
 function! s:SetSplfyCursorLine()
-  call <Sid>Dbg("SetSplfyCursorLine IN:")
+  "call <Sid>Dbg("SetSplfyCursorLine IN:")
   if !&cursorline
-    call <Sid>Dbg("  SetSplfyCursorLine setting custom hlgroup:")
+    "call <Sid>Dbg("  SetSplfyCursorLine setting custom hlgroup:")
     let b:splfy_cul_hlgroup = <Sid>SaveHLGroup('CursorLine')
     silent! hi! link CursorLine SplfyTransparentCursorLine
     silent! set cursorline
   endif
-  call <Sid>Dbg("SetSplfyCursorLine OUT:")
+  "call <Sid>Dbg("SetSplfyCursorLine OUT:")
 endfun
 
 " s:RestoreCursorLine {{{2
 function! s:RestoreCursorLine()
-  call <Sid>Dbg("RestoreCursorLine IN:")
+  "call <Sid>Dbg("RestoreCursorLine IN:")
   if exists('b:splfy_cul_hlgroup')
-    call <Sid>Dbg("  RestoreCursorLine IN: restoring cul")
+    "call <Sid>Dbg("  RestoreCursorLine IN: restoring cul")
     call <Sid>RestoreHLGroup('CursorLine', b:splfy_cul_hlgroup)
     unlet b:splfy_cul_hlgroup
     set nocursorline
   endif
-  call <Sid>Dbg("RestoreCursorLine OUT:")
+  "call <Sid>Dbg("RestoreCursorLine OUT:")
 endfun
 
 " s:ClearMatches {{{2
@@ -73,7 +84,7 @@ endfun
 
 " s:CheckHL() {{{2
 function! s:CheckHL()
-  call <Sid>Dbg("CheckHL IN:",
+  "call <Sid>Dbg("CheckHL IN:",
         \ get(b:, 'splfy_keephls', ''),
         \ get(b:, 'splfy_ctab_pat', ''),
         \ v:hlsearch
@@ -81,14 +92,14 @@ function! s:CheckHL()
   if !v:hlsearch
     " hls has been turned off (eg. with :noh), so keephls isn't relevant
     " anymore for now
-    call <Sid>Dbg("  CheckHL reset keephls:")
+    "call <Sid>Dbg("  CheckHL reset keephls:")
     let b:splfy_keephls = 0
     " no need for special hili either
     call <Sid>RestoreCursorLine()
   endif
   if has_key(b:, 'splfy_ctab_pat') && b:splfy_ctab_pat !=# @/
     " new search since last c<Tab>, reset things
-    call <Sid>Dbg("  CheckHL reset keephls & ctab_pat:")
+    "call <Sid>Dbg("  CheckHL reset keephls & ctab_pat:")
     let b:splfy_keephls = 0
     unlet b:splfy_ctab_pat
   endif
@@ -102,12 +113,12 @@ function! s:CheckHL()
     if @/ ==# '' || !search('\%#\zs'.@/,'cnW')
       " moved out of a match or @/ reset, stop hls (unless c<Tab> in progress)
       if !has_key(b:, 'splfy_ctab_pat')
-        call <Sid>Dbg("  CheckHL stopping hili:")
+        "call <Sid>Dbg("  CheckHL stopping hili:")
         call <Sid>StopHL()
       endif
     else
       " cursor on a match
-      call <Sid>Dbg("  CheckHL starting hili:")
+      "call <Sid>Dbg("  CheckHL starting hili:")
       if get(g:, 'splfy_curmatch', 1)
         " special hili for current occurrence
         call <Sid>SetSplfyCursorLine()
@@ -116,27 +127,27 @@ function! s:CheckHL()
           let b:splfy_matches = {}
         endif
         if !has_key(b:splfy_matches, @/)
-          call <Sid>Dbg("  CheckHL matchadd:")
+          "call <Sid>Dbg("  CheckHL matchadd:")
           let matchid = matchadd(
                 \ get(g:, 'splfy_curmatch_hlgroup', 'IncSearch'),
                 \ target_pat,
                 \ 101)
           let b:splfy_matches[@/] = matchid
         else
-          call <Sid>Dbg("  CheckHL already in b:splfy_matches:")
+          "call <Sid>Dbg("  CheckHL already in b:splfy_matches:")
         endif
         " redraw
       endif
     endif
   else
-    call <Sid>Dbg("  CheckHL nop:")
+    "call <Sid>Dbg("  CheckHL nop:")
   endif
-  call <Sid>Dbg("CheckHL OUT:")
+  "call <Sid>Dbg("CheckHL OUT:")
 endfun
 
 " s:StopHL() {{{2
 function! s:StopHL()
-  call <Sid>Dbg("StopHL IN:",
+  "call <Sid>Dbg("StopHL IN:",
         \ get(b:, 'splfy_keephls', ''),
         \ get(b:, 'splfy_ctab_pat', ''),
         \ v:hlsearch
@@ -144,28 +155,28 @@ function! s:StopHL()
   call <Sid>RestoreCursorLine()
   " keep matches if c<Tab> in progress
   if get(b:, 'splfy_ctab_pat', '') == ''
-    call <Sid>Dbg("  StopHL clearmatches:")
+    "call <Sid>Dbg("  StopHL clearmatches:")
     call <SID>ClearMatches()
   endif
   if !v:hlsearch || mode() isnot 'n'
         \ || get(b:, 'splfy_keephls', 0)
         \ || get(g:, 'splfy_keephls', 0)
-    call <Sid>Dbg("StopHL OUT:")
+    "call <Sid>Dbg("StopHL OUT:")
     return
   else
     " xfer execution out of func, so that nohls be not reset
-    call <Sid>Dbg("  StopHL nohls:")
+    "call <Sid>Dbg("  StopHL nohls:")
     silent! call feedkeys("\<Plug>(spotlightify)nohls", 'mi')
   endif
-  call <Sid>Dbg("StopHL OUT:")
+  "call <Sid>Dbg("StopHL OUT:")
 endfun
 
 " s:ChangedHLSearch() {{{2
 function! s:ChangedHLSearch(old, new)
-  call <Sid>Dbg("ChangedHLSearch IN:")
+  "call <Sid>Dbg("ChangedHLSearch IN:")
   if a:old == 0 && a:new == 1
     " set hls
-    call <Sid>Dbg("  ChangedHLSearch: set hls")
+    "call <Sid>Dbg("  ChangedHLSearch: set hls")
     noremap  <expr> <Plug>(spotlightify)nohls
           \ strpart(execute('nohlsearch'), 999) . ""
     noremap! <expr> <Plug>(spotlightify)nohls
@@ -175,7 +186,7 @@ function! s:ChangedHLSearch(old, new)
     autocmd Spotlightify InsertEnter * call <SID>StopHL()
   elseif a:old == 1 && a:new == 0
     " unset hls
-    call <Sid>Dbg("  ChangedHLSearch: unset hls")
+    "call <Sid>Dbg("  ChangedHLSearch: unset hls")
 
     call <SID>ClearMatches()
 
@@ -185,21 +196,21 @@ function! s:ChangedHLSearch(old, new)
     autocmd! Spotlightify CursorMoved
     autocmd! Spotlightify InsertEnter
   else
-    call <Sid>Dbg("  ChangedHLSearch: nop")
+    "call <Sid>Dbg("  ChangedHLSearch: nop")
     return
   endif
-  call <Sid>Dbg("ChangedHLSearch OUT:")
+  "call <Sid>Dbg("ChangedHLSearch OUT:")
 endfun
 
 " s:SplfyGn {{{2
 function! SplfyGn(dir)
-  call <Sid>Dbg("SplfyGn IN:")
+  "call <Sid>Dbg("SplfyGn IN:")
   let b:splfy_ctab_pat = @/
   let b:splfy_keephls = 1
   silent! set hls
   " call <SID>CheckHL()
   silent! exe 'norm!' (a:dir==-1 ? 'gN' : 'gn')
-  call <Sid>Dbg("SplfyGn OUT:")
+  "call <Sid>Dbg("SplfyGn OUT:")
 endfun
 
 " s:Dbg {{{2
