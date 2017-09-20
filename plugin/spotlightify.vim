@@ -73,6 +73,7 @@ endfun
 
 " s:ClearMatches {{{2
 function! s:ClearMatches()
+  "call <Sid>Dbg("ClearMatches IN:")
   silent! if has_key(b:, 'splfy_matches') && !empty(b:splfy_matches)
     " clear matches
     for matchid in values(b:splfy_matches)
@@ -80,6 +81,7 @@ function! s:ClearMatches()
     endfor
     let b:splfy_matches = {}
   endif
+  "call <Sid>Dbg("ClearMatches OUT:")
 endfun
 
 " s:CheckHL() {{{2
@@ -90,18 +92,23 @@ function! s:CheckHL()
         \ v:hlsearch
         \)
   if !v:hlsearch
-    " hls has been turned off (eg. with :noh), so keephls isn't relevant
-    " anymore for now
-    "call <Sid>Dbg("  CheckHL reset keephls:")
-    let b:splfy_keephls = 0
-    " no need for special hili either
-    call <Sid>RestoreCursorLine()
+    " hls has been turned off (eg. with :noh)
+    " keephls & ctab_pat aren't relevant anymore for now
+    "call <Sid>Dbg("  CheckHL hls off:")
+    "call <Sid>Dbg("  CheckHL reset keephls:", get(b:, 'splfy_keephls', ''))
+    silent! unlet b:splfy_keephls
+    "call <Sid>Dbg("  CheckHL reset ctab_pat:", get(b:, 'splfy_ctab_pat', ''))
+    silent! unlet b:splfy_ctab_pat
+    " turn off whatever hl remains (cul, matches)
+    call <Sid>StopHL()
   endif
   if has_key(b:, 'splfy_ctab_pat') && b:splfy_ctab_pat !=# @/
     " new search since last c<Tab>, reset things
-    "call <Sid>Dbg("  CheckHL reset keephls & ctab_pat:")
-    let b:splfy_keephls = 0
-    unlet b:splfy_ctab_pat
+    "call <Sid>Dbg("  CheckHL new search:")
+    "call <Sid>Dbg("  CheckHL reset keephls:", get(b:, 'splfy_keephls', ''))
+    silent! unlet b:splfy_keephls
+    "call <Sid>Dbg("  CheckHL reset ctab_pat:", get(b:, 'splfy_ctab_pat', ''))
+    silent! unlet b:splfy_ctab_pat
   endif
   " conditions to start checking hl:
   "   - hls is on
@@ -129,7 +136,7 @@ function! s:CheckHL()
         if !has_key(b:splfy_matches, @/)
           "call <Sid>Dbg("  CheckHL matchadd:")
           let matchid = matchadd(
-                \ get(g:, 'splfy_curmatch_hlgroup', 'IncSearch'),
+                \ 'SplfyCurrentMatch',
                 \ target_pat,
                 \ 101)
           let b:splfy_matches[@/] = matchid
@@ -153,18 +160,15 @@ function! s:StopHL()
         \ v:hlsearch
         \)
   call <Sid>RestoreCursorLine()
-  " keep matches if c<Tab> in progress
-  if get(b:, 'splfy_ctab_pat', '') == ''
-    "call <Sid>Dbg("  StopHL clearmatches:")
-    call <SID>ClearMatches()
-  endif
+  call <Sid>ClearMatches()
+  " only call nohls if hls is on, in normal mode
   if !v:hlsearch || mode() isnot 'n'
         \ || get(b:, 'splfy_keephls', 0)
         \ || get(g:, 'splfy_keephls', 0)
     "call <Sid>Dbg("StopHL OUT:")
     return
   else
-    " xfer execution out of func, so that nohls be not reset
+    " set nohls out of func, otherwise it's reset
     "call <Sid>Dbg("  StopHL nohls:")
     silent! call feedkeys("\<Plug>(spotlightify)nohls", 'mi')
   endif
@@ -182,13 +186,13 @@ function! s:ChangedHLSearch(old, new)
     noremap! <expr> <Plug>(spotlightify)nohls
           \ strpart(execute('nohlsearch'), 999)
 
-    autocmd Spotlightify CursorMoved * call <SID>CheckHL()
-    autocmd Spotlightify InsertEnter * call <SID>StopHL()
+    autocmd Spotlightify CursorMoved * call <Sid>CheckHL()
+    autocmd Spotlightify InsertEnter * call <Sid>StopHL()
   elseif a:old == 1 && a:new == 0
     " unset hls
     "call <Sid>Dbg("  ChangedHLSearch: unset hls")
 
-    call <SID>ClearMatches()
+    call <Sid>ClearMatches()
 
     unmap  <Plug>(spotlightify)nohls
     unmap! <Plug>(spotlightify)nohls
@@ -205,10 +209,10 @@ endfun
 " s:SplfyGn {{{2
 function! SplfyGn(dir)
   "call <Sid>Dbg("SplfyGn IN:")
+  " remember search pattern, and keep hls on (for repeating cgn)
   let b:splfy_ctab_pat = @/
   let b:splfy_keephls = 1
   silent! set hls
-  " call <SID>CheckHL()
   silent! exe 'norm!' (a:dir==-1 ? 'gN' : 'gn')
   "call <Sid>Dbg("SplfyGn OUT:")
 endfun
@@ -234,12 +238,9 @@ nnoremap <silent> <Plug>(spotlightify)searchreplacefwd
       \ :let b:splfy_keephls=1<cr>*g``c:
       \let v:hlsearch=1<Bar>call SplfyGn(1)<cr>
 
-      " \let b:splfy_keephls=1<Bar>set hls<Bar>norm! gn<cr>
-
 nnoremap <silent> <Plug>(spotlightify)searchreplacebak
       \ :let b:splfy_keephls=1<cr>*g``c:
       \let v:hlsearch=1<Bar>call SplfyGn(-1)<cr>
-      " \let b:splfy_keephls=1<Bar>set hls<Bar>norm! gN<cr>
 
 xnoremap <silent> <Plug>(spotlightify)searchreplacefwd
       \ :<C-u>let @/=strpart(getline('.'),
@@ -282,6 +283,8 @@ hi SplfyTransparentCursorLine
       \ ctermfg=NONE ctermbg=NONE cterm=NONE 
       \ guifg=NONE   guibg=NONE   gui=NONE
 
+hi default link SplfyCurrentMatch IncSearch
+
 
 "-----------
 " Init {{{1
@@ -290,10 +293,10 @@ hi SplfyTransparentCursorLine
 augroup Spotlightify
   au!
   autocmd OptionSet hlsearch
-        \ call <SID>ChangedHLSearch(v:option_old, v:option_new)
+        \ call <Sid>ChangedHLSearch(v:option_old, v:option_new)
 augroup END
 
-call <SID>ChangedHLSearch(0, &hlsearch)
+call <Sid>ChangedHLSearch(0, &hlsearch)
 
 let &cpo = s:save_cpo
 

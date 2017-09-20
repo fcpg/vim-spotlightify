@@ -33,9 +33,9 @@ Use your favorite method:
 
 Acknowledgments
 ----------------
-Originally a fork from @romainl `vim-cool`.
+Originally a fork from [@romainl](https://github.com/romainl) `vim-cool`.
 
-Many thanks to igemnace on #vim for testing.
+Many thanks to [@igemnace](https://github.com/igemnace) on #vim for testing.
 
 License
 --------
