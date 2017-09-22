@@ -6,9 +6,10 @@
 2. Quick Start                                     |spotlightify-quickstart|
 3. Key Mappings                                    |spotlightify-keymappings|
 4. Options                                         |spotlightify-options|
-5. Changelog                                       |spotlightify-changelog|
-6. Contribute                                      |spotlightify-contribute|
-7. License                                         |spotlightify-license|
+5. Highlight groups                                |spotlightify-hlgroups|
+6. Changelog                                       |spotlightify-changelog|
+7. Contribute                                      |spotlightify-contribute|
+8. License                                         |spotlightify-license|
 
 =============================================================================
 ABOUT SPOTLIGHTIFY                                         *spotlightify-about*
@@ -34,6 +35,8 @@ QUICK START                                           *spotlightify-quickstart*
    word. Replace the next occurrences with |.| (dot).
    `c<S-Tab>` and `g<S-Tab>` (with Shift-Tab) search & replace in reverse
    direction (backward).
+   You can unset highlighting after a `c<Tab>` with builtin `:noh`, or by
+   doing a new search.
 
 =============================================================================
 KEY MAPPINGS                                         *spotlightify-keymappings*
@@ -46,7 +49,7 @@ KEY MAPPINGS                                         *spotlightify-keymappings*
 >
    nmap cx <Plug>(spotlightify)searchreplacefwd
 <
-- `<Plug>(spotlightify)searchreplaceBak`
+- `<Plug>(spotlightify)searchreplacebak`
   Same as above, in reverse (backward) direction.
 
 - `c<Tab>`
@@ -70,10 +73,6 @@ g:splfy_curmatch                                             *g:splfy_curmatch*
   Set to 1 to highlight current match differently.
   Default: 1
 
-g:splfy_curmatch_hlgroup                             *g:splfy_curmatch_hlgroup*
-  Set the highlight group used for the current match.
-  Default: IncSearch
-
 g:splfy_keephls                                               *g:splfy_keephls*
   Set to 1 to keep hlsearch enabled until disabled or next search.
   Default: 0
@@ -81,6 +80,13 @@ g:splfy_keephls                                               *g:splfy_keephls*
 g:splfy_setmaps                                               *g:splfy_setmaps*
   Set to 0 to prevent defaults maps to `<Plug>(spotlightify)searchreplace`
   Default: 1
+
+=============================================================================
+HIGHLIGHT GROUPS                                        *spotlightify-hlgroups*
+
+SplfyCurrentMatch                                           *SplfyCurrentMatch*
+  Used for current match
+  Default: link to IncSearch
 
 =============================================================================
 CHANGELOG                                              *spotlightify-changelog*

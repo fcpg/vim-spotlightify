@@ -91,6 +91,11 @@ function! s:CheckHL()
         \ get(b:, 'splfy_ctab_pat', ''),
         \ v:hlsearch
         \)
+  " unset E from cpo if we set it
+  if exists('g:splfy_cpo_E')
+    let &cpo = substitute(&cpo, '\CE', '', 'g')
+    unlet g:splfy_cpo_E
+  endif
   if !v:hlsearch
     " hls has been turned off (eg. with :noh)
     " keephls & ctab_pat aren't relevant anymore for now
@@ -212,8 +217,20 @@ function! SplfyGn(dir)
   " remember search pattern, and keep hls on (for repeating cgn)
   let b:splfy_ctab_pat = @/
   let b:splfy_keephls = 1
+  " save cpo and set E (error/nop on empty region)
+  if stridx(&cpo, 'E') == -1
+    let g:splfy_cpo_E = 1
+    set cpo+=E
+  endif
   silent! set hls
   silent! exe 'norm!' (a:dir==-1 ? 'gN' : 'gn')
+  if mode() !=? 'v'
+    " didn't move, abort
+    echohl WarningMsg
+    echo "No more matches"
+    echohl NONE
+    " call feedkeys("\<Esc>cgn", 'tin')
+  endif
   "call <Sid>Dbg("SplfyGn OUT:")
 endfun
 
@@ -235,11 +252,11 @@ endfun
 
 " Plugs {{{2
 nnoremap <silent> <Plug>(spotlightify)searchreplacefwd
-      \ :let b:splfy_keephls=1<cr>*g``c:
+      \ :let b:splfy_keephls=1<Bar>let @/=expand('<cword>')<cr>c:
       \let v:hlsearch=1<Bar>call SplfyGn(1)<cr>
 
 nnoremap <silent> <Plug>(spotlightify)searchreplacebak
-      \ :let b:splfy_keephls=1<cr>*g``c:
+      \ :let b:splfy_keephls=1<Bar>let @/=expand('<cword>')<cr>c:
       \let v:hlsearch=1<Bar>call SplfyGn(-1)<cr>
 
 xnoremap <silent> <Plug>(spotlightify)searchreplacefwd
