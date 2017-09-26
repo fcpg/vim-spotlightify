@@ -5,11 +5,12 @@
 1. About spotlightify                              |spotlightify-about|
 2. Quick Start                                     |spotlightify-quickstart|
 3. Key Mappings                                    |spotlightify-keymappings|
-4. Options                                         |spotlightify-options|
-5. Highlight groups                                |spotlightify-hlgroups|
-6. Changelog                                       |spotlightify-changelog|
-7. Contribute                                      |spotlightify-contribute|
-8. License                                         |spotlightify-license|
+4. Commands                                        |spotlightify-commands|
+5. Options                                         |spotlightify-options|
+6. Highlight groups                                |spotlightify-hlgroups|
+7. Changelog                                       |spotlightify-changelog|
+8. Contribute                                      |spotlightify-contribute|
+9. License                                         |spotlightify-license|
 
 =============================================================================
 ABOUT SPOTLIGHTIFY                                         *spotlightify-about*
@@ -35,8 +36,9 @@ QUICK START                                           *spotlightify-quickstart*
    word. Replace the next occurrences with |.| (dot).
    `c<S-Tab>` and `g<S-Tab>` (with Shift-Tab) search & replace in reverse
    direction (backward).
-   You can unset highlighting after a `c<Tab>` with builtin `:noh`, or by
-   doing a new search.
+   You can unset highlighting after a `c<Tab>` with the `:Nohls` command, or
+   with the builtin `:noh` (the current match highlight will linger for a
+   short while, though). Doing a new search will reset highlighting.
 
 =============================================================================
 KEY MAPPINGS                                         *spotlightify-keymappings*
@@ -62,9 +64,15 @@ KEY MAPPINGS                                         *spotlightify-keymappings*
 
 - `g<Tab>`
 - `g<S-Tab>`
-  Default visual maps equivalent for `c<Tab>` and `c<S-Tab>`
+  Default visual maps equivalent for `c<Tab>` and `c<S-Tab>`.
   Same conditions as normal maps apply.
 
+=============================================================================
+COMMANDS                                                *spotlightify-commands*
+
+:Nohls                                                     *spotlightify-nohls*
+  Temporarily turn off all search highlighting.
+  Useful once you are done replacing after `c<Tab>`.
 
 =============================================================================
 OPTIONS                                                  *spotlightify-options*

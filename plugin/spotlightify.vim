@@ -30,7 +30,7 @@ endif
 "----------------
 
 " s:SaveHLGroup {{{2
-function! s:SaveHLGroup(hlgroup)
+function! s:SaveHLGroup(hlgroup) abort
   redir => hlsave
   silent! exe 'hi' a:hlgroup
   redir END
@@ -43,12 +43,12 @@ function! s:SaveHLGroup(hlgroup)
 endfun
 
 " s:RestoreHLGroup {{{2
-function! s:RestoreHLGroup(hlgroup, save)
+function! s:RestoreHLGroup(hlgroup, save) abort
   silent! exe 'hi!' a:save
 endfun
 
 " s:SetSplfyCursorLine {{{2
-function! s:SetSplfyCursorLine()
+function! s:SetSplfyCursorLine() abort
   "call <Sid>Dbg("SetSplfyCursorLine IN:")
   if !&cursorline
     "call <Sid>Dbg("  SetSplfyCursorLine setting custom hlgroup:")
@@ -60,7 +60,7 @@ function! s:SetSplfyCursorLine()
 endfun
 
 " s:RestoreCursorLine {{{2
-function! s:RestoreCursorLine()
+function! s:RestoreCursorLine() abort
   "call <Sid>Dbg("RestoreCursorLine IN:")
   if exists('b:splfy_cul_hlgroup')
     "call <Sid>Dbg("  RestoreCursorLine IN: restoring cul")
@@ -72,7 +72,7 @@ function! s:RestoreCursorLine()
 endfun
 
 " s:ClearMatches {{{2
-function! s:ClearMatches()
+function! s:ClearMatches() abort
   "call <Sid>Dbg("ClearMatches IN:")
   silent! if has_key(b:, 'splfy_matches') && !empty(b:splfy_matches)
     " clear matches
@@ -85,7 +85,7 @@ function! s:ClearMatches()
 endfun
 
 " s:CheckHL() {{{2
-function! s:CheckHL()
+function! s:CheckHL() abort
   "call <Sid>Dbg("CheckHL IN:",
         \ get(b:, 'splfy_keephls', ''),
         \ get(b:, 'splfy_ctab_pat', ''),
@@ -158,7 +158,7 @@ function! s:CheckHL()
 endfun
 
 " s:StopHL() {{{2
-function! s:StopHL()
+function! s:StopHL() abort
   "call <Sid>Dbg("StopHL IN:",
         \ get(b:, 'splfy_keephls', ''),
         \ get(b:, 'splfy_ctab_pat', ''),
@@ -181,7 +181,7 @@ function! s:StopHL()
 endfun
 
 " s:ChangedHLSearch() {{{2
-function! s:ChangedHLSearch(old, new)
+function! s:ChangedHLSearch(old, new) abort
   "call <Sid>Dbg("ChangedHLSearch IN:")
   if a:old == 0 && a:new == 1
     " set hls
@@ -212,7 +212,7 @@ function! s:ChangedHLSearch(old, new)
 endfun
 
 " s:SplfyGn {{{2
-function! SplfyGn(dir)
+function! SplfyGn(dir) abort
   "call <Sid>Dbg("SplfyGn IN:")
   " remember search pattern, and keep hls on (for repeating cgn)
   let b:splfy_ctab_pat = @/
@@ -235,7 +235,7 @@ function! SplfyGn(dir)
 endfun
 
 " s:Dbg {{{2
-function! s:Dbg(msg, ...)
+function! s:Dbg(msg, ...) abort
   if g:splfy_debug
     let m = a:msg." /".@/."/"
     if a:0
@@ -289,6 +289,14 @@ if get(g:, 'splfy_setmaps', 1)
           \ <Plug>(spotlightify)searchreplacebak
   endif
 endif
+
+
+"---------------
+" Commands {{{1
+"---------------
+
+com! -bar Nohls
+      \ nohls|call <Sid>StopHL()
 
 
 "----------------
