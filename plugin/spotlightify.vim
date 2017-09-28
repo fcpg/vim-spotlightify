@@ -134,17 +134,21 @@ function! s:CheckHL() abort
       if get(g:, 'splfy_curmatch', 1)
         " special hili for current occurrence
         call <Sid>SetSplfyCursorLine()
-        let target_pat = '\c\%#\%('.@/.'\)'
+        let target_pat = (&ic?'\c':'\C').'\%#\%('.@/.'\)'
         if !exists('b:splfy_matches')
           let b:splfy_matches = {}
         endif
         if !has_key(b:splfy_matches, @/)
           "call <Sid>Dbg("  CheckHL matchadd:")
-          let matchid = matchadd(
+          silent! let matchid = matchadd(
                 \ 'SplfyCurrentMatch',
                 \ target_pat,
                 \ 101)
-          let b:splfy_matches[@/] = matchid
+          if matchid >= 0
+            let b:splfy_matches[@/] = matchid
+          else
+            "call <Sid>Dbg("  CheckHL error in matchadd:")
+          endif
         else
           "call <Sid>Dbg("  CheckHL already in b:splfy_matches:")
         endif
