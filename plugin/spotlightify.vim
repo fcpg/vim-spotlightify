@@ -256,22 +256,36 @@ endfun
 
 " Plugs {{{2
 nnoremap <silent> <Plug>(spotlightify)searchreplacefwd
-      \ :let b:splfy_keephls=1<Bar>let @/=expand('<cword>')<cr>c:
-      \let v:hlsearch=1<Bar>call SplfyGn(1)<cr>
+      \ :let b:splfy_keephls=1<Bar>let @/=expand('<cword>').'\%(\%#.\)\@<!'<cr>
+      \:if len(@/) == 14<Bar>
+      \ let ww_bak=&ww<Bar>set ww&vim<Bar>exe "norm! \<lt>Bs>"<Bar>
+      \ let &ww=ww_bak<Bar>unlet ww_bak<Bar>endif<cr>
+      \c:let v:hlsearch=1<Bar>call SplfyGn(1)<cr>
 
 nnoremap <silent> <Plug>(spotlightify)searchreplacebak
-      \ :let b:splfy_keephls=1<Bar>let @/=expand('<cword>')<cr>c:
-      \let v:hlsearch=1<Bar>call SplfyGn(-1)<cr>
+      \ :let b:splfy_keephls=1<Bar>let @/=expand('<cword>').'\%(\%#.\)\@<!'<cr>
+      \:if len(@/) == 14<Bar>
+      \ let ww_bak=&ww<Bar>set ww&vim<Bar>exe "norm! \<lt>Space>"<Bar>
+      \ let &ww=ww_bak<Bar>unlet ww_bak<Bar>endif<cr>
+      \c:let v:hlsearch=1<Bar>call SplfyGn(-1)<cr>
 
 xnoremap <silent> <Plug>(spotlightify)searchreplacefwd
       \ :<C-u>let @/=strpart(getline('.'),
       \  col("'<")-1, (line('.')==line("'>")?col("'>"):col("$")) - col("'<")+1)
-      \<cr>c:let v:hlsearch=1<Bar>call SplfyGn(1)<cr>
+      \ . '\%(\%#.\)\@<!'<cr>
+      \:if len(@/) == 14<Bar>
+      \ let ww_bak=&ww<Bar>set ww&vim<Bar>exe "norm! \<lt>Bs>"<Bar>
+      \ let &ww=ww_bak<Bar>unlet ww_bak<Bar>endif<cr>
+      \c:let v:hlsearch=1<Bar>call SplfyGn(1)<cr>
 
 xnoremap <silent> <Plug>(spotlightify)searchreplacebak
       \ :<C-u>let @/=strpart(getline('.'),
       \  col("'<")-1, (line('.')==line("'>")?col("'>"):col("$")) - col("'<")+1)
-      \<cr>c:let v:hlsearch=1<Bar>call SplfyGn(-1)<cr>
+      \ . '\%(\%#.\)\@<!'<cr>
+      \:if len(@/) == 14<Bar>
+      \ let ww_bak=&ww<Bar>set ww&vim<Bar>exe "norm! \<lt>Space>"<Bar>
+      \ let &ww=ww_bak<Bar>unlet ww_bak<Bar>endif<cr>
+      \c:let v:hlsearch=1<Bar>call SplfyGn(-1)<cr>
 
 
 " c/g<Tab> {{{2
