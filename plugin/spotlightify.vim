@@ -226,6 +226,11 @@ function! SplfyGn(dir) abort
     let g:splfy_cpo_E = 1
     set cpo+=E
   endif
+  if a:dir == -1
+    .,1s###en
+  else
+    .,$s###en
+  endif
   silent! set hls
   silent! exe 'norm!' (a:dir==-1 ? 'gN' : 'gn')
   if mode() !=? 'v'
