@@ -215,7 +215,7 @@ function! s:ChangedHLSearch(old, new) abort
   "call <Sid>Dbg("ChangedHLSearch OUT:")
 endfun
 
-" s:SplfyGn {{{2
+" SplfyGn {{{2
 function! SplfyGn(dir) abort
   "call <Sid>Dbg("SplfyGn IN:")
   " remember search pattern, and keep hls on (for repeating cgn)
@@ -238,6 +238,30 @@ function! SplfyGn(dir) abort
   "call <Sid>Dbg("SplfyGn OUT:")
 endfun
 
+" SplfyPreGn {{{2
+function! SplfyPreGn(dir, mode)
+  let curpos_regex = '\%(\%#.\)\@<!'
+  let b:splfy_keephls = 1
+  if a:mode == 'n'
+    let @/ = expand('<cword>').curpos_regex
+  elseif a:mode == 'x'
+    let @/ = strpart(getline('.'),
+      \  col("'<")-1, (line('.')==line("'>")?col("'>"):col("$")) - col("'<")+1)
+      \ . curpos_regex
+  endif
+  if len(@/) == len(curpos_regex)+1
+    let ww_bak = &ww
+    set ww&vim
+    if a:dir == 1
+      exe "norm! \<Bs>"
+    else
+      exe "norm! 1\<Space>"
+    endif
+    let &ww = ww_bak
+    unlet ww_bak
+  endif
+endfun
+
 " s:Dbg {{{2
 function! s:Dbg(msg, ...) abort
   if g:splfy_debug
@@ -256,35 +280,19 @@ endfun
 
 " Plugs {{{2
 nnoremap <silent> <Plug>(spotlightify)searchreplacefwd
-      \ :let b:splfy_keephls=1<Bar>let @/=expand('<cword>').'\%(\%#.\)\@<!'<cr>
-      \:if len(@/) == 14<Bar>
-      \ let ww_bak=&ww<Bar>set ww&vim<Bar>exe "norm! \<lt>Bs>"<Bar>
-      \ let &ww=ww_bak<Bar>unlet ww_bak<Bar>endif<cr>
+      \ :call SplfyPreGn(1,'n')<cr>
       \c:let v:hlsearch=1<Bar>call SplfyGn(1)<cr>
 
 nnoremap <silent> <Plug>(spotlightify)searchreplacebak
-      \ :let b:splfy_keephls=1<Bar>let @/=expand('<cword>').'\%(\%#.\)\@<!'<cr>
-      \:if len(@/) == 14<Bar>
-      \ let ww_bak=&ww<Bar>set ww&vim<Bar>exe "norm! \<lt>Space>"<Bar>
-      \ let &ww=ww_bak<Bar>unlet ww_bak<Bar>endif<cr>
+      \ :call SplfyPreGn(-1,'n')<cr>
       \c:let v:hlsearch=1<Bar>call SplfyGn(-1)<cr>
 
 xnoremap <silent> <Plug>(spotlightify)searchreplacefwd
-      \ :<C-u>let @/=strpart(getline('.'),
-      \  col("'<")-1, (line('.')==line("'>")?col("'>"):col("$")) - col("'<")+1)
-      \ . '\%(\%#.\)\@<!'<cr>
-      \:if len(@/) == 14<Bar>
-      \ let ww_bak=&ww<Bar>set ww&vim<Bar>exe "norm! \<lt>Bs>"<Bar>
-      \ let &ww=ww_bak<Bar>unlet ww_bak<Bar>endif<cr>
+      \ :<C-u>call SplfyPreGn(1,'x')<cr>
       \c:let v:hlsearch=1<Bar>call SplfyGn(1)<cr>
 
 xnoremap <silent> <Plug>(spotlightify)searchreplacebak
-      \ :<C-u>let @/=strpart(getline('.'),
-      \  col("'<")-1, (line('.')==line("'>")?col("'>"):col("$")) - col("'<")+1)
-      \ . '\%(\%#.\)\@<!'<cr>
-      \:if len(@/) == 14<Bar>
-      \ let ww_bak=&ww<Bar>set ww&vim<Bar>exe "norm! \<lt>Space>"<Bar>
-      \ let &ww=ww_bak<Bar>unlet ww_bak<Bar>endif<cr>
+      \ :<C-u>call SplfyPreGn(-1,'x')<cr>
       \c:let v:hlsearch=1<Bar>call SplfyGn(-1)<cr>
 
 
