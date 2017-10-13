@@ -52,7 +52,7 @@ function! s:SetSplfyCursorLine() abort
   "call <Sid>Dbg("SetSplfyCursorLine IN:")
   if !&cursorline
     "call <Sid>Dbg("  SetSplfyCursorLine setting custom hlgroup:")
-    let b:splfy_cul_hlgroup = <Sid>SaveHLGroup('CursorLine')
+    let g:splfy_cul_hlgroup = <Sid>SaveHLGroup('CursorLine')
     silent! hi! link CursorLine SplfyTransparentCursorLine
     silent! set cursorline
   endif
@@ -62,10 +62,10 @@ endfun
 " s:RestoreCursorLine {{{2
 function! s:RestoreCursorLine() abort
   "call <Sid>Dbg("RestoreCursorLine IN:")
-  if exists('b:splfy_cul_hlgroup')
+  if exists('g:splfy_cul_hlgroup')
     "call <Sid>Dbg("  RestoreCursorLine IN: restoring cul")
-    call <Sid>RestoreHLGroup('CursorLine', b:splfy_cul_hlgroup)
-    unlet b:splfy_cul_hlgroup
+    call <Sid>RestoreHLGroup('CursorLine', g:splfy_cul_hlgroup)
+    unlet g:splfy_cul_hlgroup
     set nocursorline
   endif
   "call <Sid>Dbg("RestoreCursorLine OUT:")
