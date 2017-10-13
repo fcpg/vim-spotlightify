@@ -84,6 +84,31 @@ function! s:ClearMatches() abort
   "call <Sid>Dbg("ClearMatches OUT:")
 endfun
 
+" s:ShowMatchInfo() {{{2
+function! s:ShowMatchInfo()
+  let curpos = getcurpos()
+  redir => strtotalmatches
+    silent %s###gen
+  redir END
+  let totalmatches = matchstr(strtotalmatches, '\d\+')
+  redir => strmatchesleft
+    if v:searchforward
+      silent .,$s###gen
+    else
+      silent .,1s###gen
+    endif
+  redir END
+  let matchesleft = matchstr(strmatchesleft, '\d\+')
+  let linematches = len(split(
+        \ strcharpart(getline('.'), 0, curpos[2]),
+        \ (&ic?'\c':'\C').@/, 1)) - 1
+  let linewise_matchnr = (totalmatches - matchesleft + 1)
+  let matchnr = linewise_matchnr + linematches
+  redraw
+  echo printf("match (%d/%d)", matchnr, totalmatches)
+  call setpos('.', curpos)
+endfun
+
 " s:CheckHL() {{{2
 function! s:CheckHL() abort
   "call <Sid>Dbg("CheckHL IN:",
@@ -152,6 +177,7 @@ function! s:CheckHL() abort
         else
           "call <Sid>Dbg("  CheckHL already in b:splfy_matches:")
         endif
+        call <Sid>ShowMatchInfo()
         " redraw
       endif
     endif
@@ -226,11 +252,14 @@ function! SplfyGn(dir) abort
     let g:splfy_cpo_E = 1
     set cpo+=E
   endif
+  " call <Sid>ShowMatchInfo()
+  let curpos = getcurpos()
   if a:dir == -1
     .,1s###en
   else
     .,$s###en
   endif
+  call setpos('.', curpos)
   silent! set hls
   silent! exe 'norm!' (a:dir==-1 ? 'gN' : 'gn')
   if mode() !=? 'v'
