@@ -14,7 +14,7 @@ set cpo&vim
 "------------
 " Debug {{{1
 "------------
-let g:splfy_debug = 0
+let g:splfy_debug = 1
 if 0
 append
   " comment out all dbg calls
@@ -31,9 +31,7 @@ endif
 
 " s:SaveHLGroup {{{2
 function! s:SaveHLGroup(hlgroup) abort
-  redir => hlsave
-  silent! exe 'hi' a:hlgroup
-  redir END
+  let hlsave = split(execute('hi '.a:hlgroup, "silent!"), '\n')[0]
   if match(hlsave, "links to") != -1
     let hlsave = substitute(hlsave, '^.*links to ', 'link '.a:hlgroup.' ', '')
   else
@@ -43,32 +41,90 @@ function! s:SaveHLGroup(hlgroup) abort
 endfun
 
 " s:RestoreHLGroup {{{2
-function! s:RestoreHLGroup(hlgroup, save) abort
+function! s:RestoreHLGroup(save) abort
   silent! exe 'hi!' a:save
 endfun
 
 " s:SetSplfyCursorLine {{{2
-function! s:SetSplfyCursorLine() abort
+" Args: optional non-zero to bypass setting option
+function! s:SetSplfyCursorLine(...) abort
   "call <Sid>Dbg("SetSplfyCursorLine IN:")
-  if !&cursorline
-    "call <Sid>Dbg("  SetSplfyCursorLine setting custom hlgroup:")
+  if !&l:cursorline
+    "call <Sid>Dbg("  SetSplfyCursorLine setting custom cul hlgroup:")
     let g:splfy_cul_hlgroup = <Sid>SaveHLGroup('CursorLine')
     silent! hi! link CursorLine SplfyTransparentCursorLine
-    silent! set cursorline
+    if !a:0 || !a:1
+      silent! setl cursorline
+      let b:splfy_cul = 1
+    endif
   endif
   "call <Sid>Dbg("SetSplfyCursorLine OUT:")
 endfun
 
+" s:SetSplfyCursorColumn {{{2
+" Args: optional non-zero to bypass setting option
+function! s:SetSplfyCursorColumn(...) abort
+  "call <Sid>Dbg("SetSplfyCursorColumn IN:")
+  if !&l:cursorcolumn
+    "call <Sid>Dbg("  SetSplfyCursorColumn setting custom cuc hlgroup:")
+    let g:splfy_cuc_hlgroup = <Sid>SaveHLGroup('CursorColumn')
+    silent! hi! link CursorColumn SplfyTransparentCursorColumn
+    if !a:0 || !a:1
+      silent! setl cursorcolumn
+      let b:splfy_cuc = 1
+    endif
+  endif
+  "call <Sid>Dbg("SetSplfyCursorColumn OUT:")
+endfun
+
+" s:SetSplfyCursorLineCol {{{2
+function! s:SetSplfyCursorLineCol() abort
+  call <Sid>SetSplfyCursorLine()
+  call <Sid>SetSplfyCursorColumn()
+endfun
+
 " s:RestoreCursorLine {{{2
-function! s:RestoreCursorLine() abort
+" Args: optional non-zero to bypass unsetting option
+function! s:RestoreCursorLine(...) abort
   "call <Sid>Dbg("RestoreCursorLine IN:")
   if exists('g:splfy_cul_hlgroup')
-    "call <Sid>Dbg("  RestoreCursorLine IN: restoring cul")
-    call <Sid>RestoreHLGroup('CursorLine', g:splfy_cul_hlgroup)
+    "call <Sid>Dbg("  RestoreCursorLine IN: restoring cul hl")
+    call <Sid>RestoreHLGroup(g:splfy_cul_hlgroup)
     unlet g:splfy_cul_hlgroup
-    set nocursorline
+  endif
+  if exists('b:splfy_cul')
+    if !a:0 || !a:1
+      "call <Sid>Dbg("  RestoreCursorLine IN: restoring cul")
+      setl nocursorline
+      unlet b:splfy_cul
+    endif
   endif
   "call <Sid>Dbg("RestoreCursorLine OUT:")
+endfun
+
+" s:RestoreCursorColumn {{{2
+" Args: optional non-zero to bypass unsetting option
+function! s:RestoreCursorColumn(...) abort
+  "call <Sid>Dbg("RestoreCursorColumn IN:")
+  if exists('g:splfy_cuc_hlgroup')
+    "call <Sid>Dbg("  RestoreCursorColumn IN: restoring cuc hl")
+    call <Sid>RestoreHLGroup(g:splfy_cuc_hlgroup)
+    unlet g:splfy_cuc_hlgroup
+  endif
+  if exists('b:splfy_cuc')
+    if !a:0 || !a:1
+      "call <Sid>Dbg("  RestoreCursorColumn IN: restoring cuc")
+      setl nocursorcolumn
+      unlet b:splfy_cuc
+    endif
+  endif
+  "call <Sid>Dbg("RestoreCursorColumn OUT:")
+endfun
+
+" s:RestoreCursorLineCol {{{2
+function! s:RestoreCursorLineCol() abort
+  call <Sid>RestoreCursorLine()
+  call <Sid>RestoreCursorColumn()
 endfun
 
 " s:ClearMatches {{{2
@@ -85,38 +141,81 @@ function! s:ClearMatches() abort
 endfun
 
 " s:ShowMatchInfo() {{{2
-function! s:ShowMatchInfo()
+" Args: optional non-zero for ctab, 1/-1 for direction
+function! s:ShowMatchInfo(...) abort
+  if get(g:, 'splfy_no_matchinfo', 0)
+    return
+  endif
   let curpos = getcurpos()
-  redir => strtotalmatches
-    silent %s###gen
-  redir END
-  let totalmatches = matchstr(strtotalmatches, '\d\+')
-  redir => strmatchesleft
-    if v:searchforward
-      silent .,$s###gen
+  let ctab = a:0 ? a:1 : 0
+  try
+    let back = (ctab == -1)
+          \ || (!v:searchforward && !get(g:, 'splfy_matchinfo_fwd_only', 1))
+    let matchesleft = 0
+    if back
+      silent! 1,.s##\=execute('let matchesleft +=1')#gen
     else
-      silent .,1s###gen
+      silent! .,$s##\=execute('let matchesleft +=1')#gen
     endif
-  redir END
-  let matchesleft = matchstr(strmatchesleft, '\d\+')
-  let linematches = len(split(
-        \ strcharpart(getline('.'), 0, curpos[2]),
-        \ (&ic?'\c':'\C').@/, 1)) - 1
-  let linewise_matchnr = (totalmatches - matchesleft + 1)
-  let matchnr = linewise_matchnr + linematches
-  redraw
-  echo printf("match (%d/%d)", matchnr, totalmatches)
-  call setpos('.', curpos)
+    let totalmatches = 0
+    silent! %s##\=execute('let totalmatches +=1')#gen
+    if curpos[2] == 1 && !back
+      let linepart    = ''
+      let linematches = 0
+    else
+      let linepart = back
+            \ ? strpart(getline('.'), curpos[2])
+            \ : strpart(getline('.'), 0, curpos[2]-1)
+      " count # of occurrences on the left/right, splitting and substracting one
+      let linematches = len(split(
+            \ linepart,
+            \ (&ic&&(!&scs||match(@/,'\C\u')==-1)?'\c':'\C').@/, 1)) - 1
+    endif
+    " +1 for one-based index
+    let linewise_matchnr = totalmatches - matchesleft + 1
+    let matchnr = linewise_matchnr + linematches
+    " dbg
+    " let g:splfy_match = {'totm': totalmatches, 'mleft': matchesleft,
+          \ 'lpart': linepart, 'lmatch': linematches, 'bak': back}
+    redraw
+    if ctab
+      " adjust by one, since we just removed an occurrence
+      let ctab_left = totalmatches - matchnr + (back? 0 : 1)
+      let ctab_tot  = max([0, totalmatches - 1])
+      echo printf("%d matches left (total: %d)",
+            \ ctab_left,
+            \ ctab_tot)
+    else
+      echo printf("match (%d/%d)", matchnr, totalmatches)
+    endif
+  finally
+    call setpos('.', curpos)
+  endtry
+endfun
+
+" s:IsCursorOnMatch() {{{2
+function! s:IsCursorOnMatch(pat)
+  let p = a:pat
+  if !strlen(p)
+    return 0
+  endif
+  if p[0] == '^'
+    let p = '^\%#\zs'.p[1:]
+  else
+    let p = '\%#\zs'.p
+  endif
+  return search(p,'cnW')
 endfun
 
 " s:CheckHL() {{{2
+" called on CursorMoved
 function! s:CheckHL() abort
   "call <Sid>Dbg("CheckHL IN:",
         \ get(b:, 'splfy_keephls', ''),
         \ get(b:, 'splfy_ctab_pat', ''),
         \ v:hlsearch
         \)
-  " unset E from cpo if we set it
+  " unset E from cpo if it was set
   if exists('g:splfy_cpo_E')
     let &cpo = substitute(&cpo, '\CE', '', 'g')
     unlet g:splfy_cpo_E
@@ -147,7 +246,7 @@ function! s:CheckHL() abort
   silent! if v:hlsearch
         \ || (has_key(b:, 'splfy_matches')
         \     && !empty(b:splfy_matches))
-    if @/ ==# '' || !search('\%#\zs'.@/,'cnW')
+    if @/ ==# '' || !<Sid>IsCursorOnMatch(@/)
       " moved out of a match or @/ reset, stop hls (unless c<Tab> in progress)
       if !has_key(b:, 'splfy_ctab_pat')
         "call <Sid>Dbg("  CheckHL stopping hili:")
@@ -158,8 +257,9 @@ function! s:CheckHL() abort
       "call <Sid>Dbg("  CheckHL starting hili:")
       if get(g:, 'splfy_curmatch', 1)
         " special hili for current occurrence
-        call <Sid>SetSplfyCursorLine()
-        let target_pat = (&ic?'\c':'\C').'\%#\%('.@/.'\)'
+        call <Sid>SetSplfyCursorLineCol()
+        let target_pat = (&ic&&(!&scs||match(@/,'\C\u')==-1)?'\c':'\c').
+              \ '\%#\%('.@/.'\)'
         if !exists('b:splfy_matches')
           let b:splfy_matches = {}
         endif
@@ -182,7 +282,15 @@ function! s:CheckHL() abort
       endif
     endif
   else
-    "call <Sid>Dbg("  CheckHL nop:")
+    " no hl
+    "call <Sid>Dbg("  CheckHL no check:")
+    " reset cul/cuc if modified by splfy
+    if has_key(b:, 'splfy_cul') && &l:cursorline
+      call <Sid>RestoreCursorLine()
+    endif
+    if has_key(b:, 'splfy_cuc') && &l:cursorcolumn
+      call <Sid>RestoreCursorColumn()
+    endif
   endif
   "call <Sid>Dbg("CheckHL OUT:")
 endfun
@@ -194,7 +302,7 @@ function! s:StopHL() abort
         \ get(b:, 'splfy_ctab_pat', ''),
         \ v:hlsearch
         \)
-  call <Sid>RestoreCursorLine()
+  call <Sid>RestoreCursorLineCol()
   call <Sid>ClearMatches()
   " only call nohls if hls is on, in normal mode
   if !v:hlsearch || mode() isnot 'n'
@@ -241,6 +349,40 @@ function! s:ChangedHLSearch(old, new) abort
   "call <Sid>Dbg("ChangedHLSearch OUT:")
 endfun
 
+" s:ChangedCursorLineCol() {{{2
+function! s:ChangedCursorLineCol(type, old, new) abort
+  "call <Sid>Dbg("ChangedCursorLineCol IN:", a:type)
+  if a:old == 0 && a:new == 1
+    " set
+    "call <Sid>Dbg("  ChangedCursorLineCol: nop (set)", a:type, a:old, a:new)
+  elseif a:old == 1 && a:new == 0
+    " unset
+    "call <Sid>Dbg("  ChangedCursorLineCol: nop (unset)", a:type, a:old, a:new)
+  elseif a:old == 1 && a:new == 1
+    " option has been set while it was splfy-controlled
+    "call <Sid>Dbg("  ChangedCursorLineCol: restoring (set twice)", a:type)
+    if a:type == 'line'
+      call <Sid>RestoreCursorLine(1)
+    elseif a:type == 'col'
+      call <Sid>RestoreCursorColumn(1)
+    endif
+  elseif a:old == 0 && a:new == 0
+    "call <Sid>Dbg("  ChangedCursorLineCol: nop (unset twice)", a:type)
+  else
+    "call <Sid>Dbg("  ChangedCursorLineCol: nop", a:type)
+    return
+  endif
+  "call <Sid>Dbg("ChangedCursorLineCol OUT:", a:type)
+endfun
+
+function! s:ChangedCursorLine(old, new) abort
+  call <Sid>ChangedCursorLineCol('line', a:old, a:new)
+endfunction
+
+function! s:ChangedCursorColumn(old, new) abort
+  call <Sid>ChangedCursorLineCol('col', a:old, a:new)
+endfunction
+
 " SplfyGn {{{2
 function! SplfyGn(dir) abort
   "call <Sid>Dbg("SplfyGn IN:")
@@ -252,14 +394,6 @@ function! SplfyGn(dir) abort
     let g:splfy_cpo_E = 1
     set cpo+=E
   endif
-  " call <Sid>ShowMatchInfo()
-  let curpos = getcurpos()
-  if a:dir == -1
-    .,1s###en
-  else
-    .,$s###en
-  endif
-  call setpos('.', curpos)
   silent! set hls
   silent! exe 'norm!' (a:dir==-1 ? 'gN' : 'gn')
   if mode() !=? 'v'
@@ -267,13 +401,14 @@ function! SplfyGn(dir) abort
     echohl WarningMsg
     echo "No more matches"
     echohl NONE
-    " call feedkeys("\<Esc>cgn", 'tin')
+  else
+    call <Sid>ShowMatchInfo(a:dir)
   endif
   "call <Sid>Dbg("SplfyGn OUT:")
 endfun
 
 " SplfyPreGn {{{2
-function! SplfyPreGn(dir, mode)
+function! SplfyPreGn(dir, mode) abort
   let curpos_regex = '\%(\%#.\)\@<!'
   let b:splfy_keephls = 1
   if a:mode == 'n'
@@ -283,7 +418,10 @@ function! SplfyPreGn(dir, mode)
       \  col("'<")-1, (line('.')==line("'>")?col("'>"):col("$")) - col("'<")+1)
       \ . curpos_regex
   endif
+  " check if cursor is at last char of pattern
+  " necessary if replacement ends with original text
   if len(@/) == len(curpos_regex)+1
+    " temporarily reset whichwrap to defaults to ensure wrapping
     let ww_bak = &ww
     set ww&vim
     if a:dir == 1
@@ -368,6 +506,11 @@ hi SplfyTransparentCursorLine
       \ ctermfg=NONE ctermbg=NONE cterm=NONE 
       \ guifg=NONE   guibg=NONE   gui=NONE
 
+hi SplfyTransparentCursorColumn
+      \                           term=NONE 
+      \ ctermfg=NONE ctermbg=NONE cterm=NONE 
+      \ guifg=NONE   guibg=NONE   gui=NONE
+
 hi default link SplfyCurrentMatch IncSearch
 
 
@@ -379,6 +522,10 @@ augroup Spotlightify
   au!
   autocmd OptionSet hlsearch
         \ call <Sid>ChangedHLSearch(v:option_old, v:option_new)
+  autocmd OptionSet cursorline
+        \ call <Sid>ChangedCursorLine(v:option_old, v:option_new)
+  autocmd OptionSet cursorcolumn
+        \ call <Sid>ChangedCursorColumn(v:option_old, v:option_new)
 augroup END
 
 call <Sid>ChangedHLSearch(0, &hlsearch)

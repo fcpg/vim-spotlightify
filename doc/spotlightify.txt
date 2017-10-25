@@ -89,6 +89,14 @@ g:splfy_setmaps                                               *g:splfy_setmaps*
   Set to 0 to prevent defaults maps to `<Plug>(spotlightify)searchreplace`
   Default: 1
 
+g:splfy_no_matchinfo                                     *g:splfy_no_matchinfo*
+  Set to 1 to disable information on matches (match # / total)
+  Default: 0
+
+g:splfy_matchinfo_fwd_only                         *g:splfy_matchinfo_fwd_only*
+  Set to 0 to make match number relative to search direction (/ or ?)
+  Default: 1
+
 =============================================================================
 HIGHLIGHT GROUPS                                        *spotlightify-hlgroups*
 
