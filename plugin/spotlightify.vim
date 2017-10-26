@@ -526,6 +526,8 @@ augroup Spotlightify
         \ call <Sid>ChangedCursorLine(v:option_old, v:option_new)
   autocmd OptionSet cursorcolumn
         \ call <Sid>ChangedCursorColumn(v:option_old, v:option_new)
+  autocmd BufLeave *
+        \ call <Sid>StopHL()
 augroup END
 
 call <Sid>ChangedHLSearch(0, &hlsearch)
