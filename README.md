@@ -16,7 +16,7 @@ By default, `c<Tab>` is mapped to a "search & replace" on the current word,
 repeatable (with `.`) on other occurrences of that word. All instances are
 highlighted accordingly during the operation.
 
-[![asciicast](https://asciinema.org/a/p3LppffoDc7kT9xEKOrk9izv6.png)](https://asciinema.org/a/p3LppffoDc7kT9xEKOrk9izv6)
+[![asciicast](https://asciinema.org/a/dcFbyEBaHTUNUCX3ZEmYoz4mh.png)](https://asciinema.org/a/dcFbyEBaHTUNUCX3ZEmYoz4mh)
 
 Requirements
 -------------
