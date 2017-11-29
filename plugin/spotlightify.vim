@@ -14,7 +14,7 @@ set cpo&vim
 "------------
 " Debug {{{1
 "------------
-let g:splfy_debug = 1
+let g:splfy_debug = 0
 if 0
 append
   " comment out all dbg calls
@@ -52,9 +52,10 @@ function! s:SetSplfyCursorLine(...) abort
   if !&l:cursorline
     "call <Sid>Dbg("  SetSplfyCursorLine setting custom cul hlgroup:")
     let g:splfy_cul_hlgroup = <Sid>SaveHLGroup('CursorLine')
-    silent! hi! link CursorLine SplfyTransparentCursorLine
+    hi! link CursorLine SplfyTransparentCursorLine
     if !a:0 || !a:1
-      silent! setl cursorline
+      "call <Sid>Dbg("  SetSplfyCursorLine setting cul", bufname(''))
+      noauto setl cursorline
       let b:splfy_cul = 1
     endif
   endif
@@ -68,9 +69,10 @@ function! s:SetSplfyCursorColumn(...) abort
   if !&l:cursorcolumn
     "call <Sid>Dbg("  SetSplfyCursorColumn setting custom cuc hlgroup:")
     let g:splfy_cuc_hlgroup = <Sid>SaveHLGroup('CursorColumn')
-    silent! hi! link CursorColumn SplfyTransparentCursorColumn
+    hi! link CursorColumn SplfyTransparentCursorColumn
     if !a:0 || !a:1
-      silent! setl cursorcolumn
+      "call <Sid>Dbg("  SetSplfyCursorColumn setting cuc", bufname(''))
+      noauto setl cursorcolumn
       let b:splfy_cuc = 1
     endif
   endif
@@ -94,8 +96,8 @@ function! s:RestoreCursorLine(...) abort
   endif
   if exists('b:splfy_cul')
     if !a:0 || !a:1
-      "call <Sid>Dbg("  RestoreCursorLine IN: restoring cul")
-      setl nocursorline
+      "call <Sid>Dbg("  RestoreCursorLine IN: restoring cul", bufname(''))
+      noauto setl nocursorline
       unlet b:splfy_cul
     endif
   endif
@@ -113,8 +115,8 @@ function! s:RestoreCursorColumn(...) abort
   endif
   if exists('b:splfy_cuc')
     if !a:0 || !a:1
-      "call <Sid>Dbg("  RestoreCursorColumn IN: restoring cuc")
-      setl nocursorcolumn
+      "call <Sid>Dbg("  RestoreCursorColumn IN: restoring cuc", bufname(''))
+      noauto setl nocursorcolumn
       unlet b:splfy_cuc
     endif
   endif
@@ -123,19 +125,41 @@ endfun
 
 " s:RestoreCursorLineCol {{{2
 function! s:RestoreCursorLineCol() abort
+  "call <Sid>Dbg("RestoreCursorLineCol IN:", bufname(''))
   call <Sid>RestoreCursorLine()
   call <Sid>RestoreCursorColumn()
+  "call <Sid>Dbg("  RestoreCursorLineCol:", &l:cursorline, &l:cursorcolumn,
+        \ &cursorline, &cursorcolumn)
+  "call <Sid>Dbg("RestoreCursorLineCol OUT:", bufname(''))
 endfun
 
 " s:ClearMatches {{{2
 function! s:ClearMatches() abort
-  "call <Sid>Dbg("ClearMatches IN:")
-  silent! if has_key(b:, 'splfy_matches') && !empty(b:splfy_matches)
+  "call <Sid>Dbg("ClearMatches IN:", bufname(''))
+  let m = getmatches()
+  if has_key(b:, 'splfy_matches') && !empty(b:splfy_matches)
     " clear matches
+    if empty(m)
+      "call <Sid>Dbg("  ClearMatches: getmatches() empty")
+      return
+    else
+      let mid = {}
+      for d in m
+        let mid[d['id']] = 1
+      endfor
+    endif
     for matchid in values(b:splfy_matches)
-      silent! call matchdelete(matchid)
+      if has_key(mid, matchid)
+        "call <Sid>Dbg("  ClearMatches: deleting id:", matchid)
+        call matchdelete(matchid)
+      else
+        "call <Sid>Dbg("  ClearMatches: matchid not found in getmatches():",
+              \ matchid)
+      endif
     endfor
     let b:splfy_matches = {}
+  else
+    "call <Sid>Dbg("  ClearMatches: splfy_matches null or empty")
   endif
   "call <Sid>Dbg("ClearMatches OUT:")
 endfun
@@ -223,21 +247,21 @@ function! s:CheckHL() abort
   if !v:hlsearch
     " hls has been turned off (eg. with :noh)
     " keephls & ctab_pat aren't relevant anymore for now
-    "call <Sid>Dbg("  CheckHL hls off:")
-    "call <Sid>Dbg("  CheckHL reset keephls:", get(b:, 'splfy_keephls', ''))
-    silent! unlet b:splfy_keephls
-    "call <Sid>Dbg("  CheckHL reset ctab_pat:", get(b:, 'splfy_ctab_pat', ''))
-    silent! unlet b:splfy_ctab_pat
+    "call <Sid>Dbg("  CheckHL hls is off:")
+    "call <Sid>Dbg("  CheckHL resetting keephls:", get(b:, 'splfy_keephls', ''))
+    unlet! b:splfy_keephls
+    "call <Sid>Dbg("  CheckHL resetting ctab_pat:", get(b:, 'splfy_ctab_pat', ''))
+    unlet! b:splfy_ctab_pat
     " turn off whatever hl remains (cul, matches)
     call <Sid>StopHL()
   endif
   if has_key(b:, 'splfy_ctab_pat') && b:splfy_ctab_pat !=# @/
     " new search since last c<Tab>, reset things
     "call <Sid>Dbg("  CheckHL new search:")
-    "call <Sid>Dbg("  CheckHL reset keephls:", get(b:, 'splfy_keephls', ''))
-    silent! unlet b:splfy_keephls
-    "call <Sid>Dbg("  CheckHL reset ctab_pat:", get(b:, 'splfy_ctab_pat', ''))
-    silent! unlet b:splfy_ctab_pat
+    "call <Sid>Dbg("  CheckHL resetting keephls:", get(b:, 'splfy_keephls', ''))
+    unlet! b:splfy_keephls
+    "call <Sid>Dbg("  CheckHL resetting ctab_pat:", get(b:, 'splfy_ctab_pat', ''))
+    unlet! b:splfy_ctab_pat
   endif
   " conditions to start checking hl:
   "   - hls is on
@@ -264,12 +288,13 @@ function! s:CheckHL() abort
           let b:splfy_matches = {}
         endif
         if !has_key(b:splfy_matches, @/)
-          "call <Sid>Dbg("  CheckHL matchadd:")
-          silent! let matchid = matchadd(
+          "call <Sid>Dbg("  CheckHL calling matchadd:", bufname(''))
+          let matchid = matchadd(
                 \ 'SplfyCurrentMatch',
                 \ target_pat,
                 \ 101)
           if matchid >= 0
+            "call <Sid>Dbg("  CheckHL match added:", matchid, string(getmatches()))
             let b:splfy_matches[@/] = matchid
           else
             "call <Sid>Dbg("  CheckHL error in matchadd:")
@@ -283,7 +308,12 @@ function! s:CheckHL() abort
     endif
   else
     " no hl
-    "call <Sid>Dbg("  CheckHL no check:")
+    "call <Sid>Dbg("  CheckHL v:hls is off: no check, restoring cul/cuc if need be",
+          \ get(b:, 'splfy_cul', ''),
+          \ get(b:, 'splfy_cuc', ''),
+          \ &l:cursorline,
+          \ &l:cursorcolumn
+          \ )
     " reset cul/cuc if modified by splfy
     if has_key(b:, 'splfy_cul') && &l:cursorline
       call <Sid>RestoreCursorLine()
@@ -305,6 +335,7 @@ function! s:StopHL() abort
   call <Sid>RestoreCursorLineCol()
   call <Sid>ClearMatches()
   " only call nohls if hls is on, in normal mode
+  " or if arg == 1
   if !v:hlsearch || mode() isnot 'n'
         \ || get(b:, 'splfy_keephls', 0)
         \ || get(g:, 'splfy_keephls', 0)
@@ -312,7 +343,7 @@ function! s:StopHL() abort
     return
   else
     " set nohls out of func, otherwise it's reset
-    "call <Sid>Dbg("  StopHL nohls:")
+    "call <Sid>Dbg("  StopHL: sending nohls via feedkeys()", bufname(''))
     silent! call feedkeys("\<Plug>(spotlightify)nohls", 'mi')
   endif
   "call <Sid>Dbg("StopHL OUT:")
@@ -394,7 +425,7 @@ function! SplfyGn(dir) abort
     let g:splfy_cpo_E = 1
     set cpo+=E
   endif
-  silent! set hls
+  set hls
   silent! exe 'norm!' (a:dir==-1 ? 'gN' : 'gn')
   if mode() !=? 'v'
     " didn't move, abort
@@ -526,8 +557,15 @@ augroup Spotlightify
         \ call <Sid>ChangedCursorLine(v:option_old, v:option_new)
   autocmd OptionSet cursorcolumn
         \ call <Sid>ChangedCursorColumn(v:option_old, v:option_new)
-  autocmd BufLeave *
-        \ call <Sid>StopHL()
+  autocmd BufLeave,TabLeave *
+        \ nohls|call <Sid>StopHL()
+  " autocmd BufLeave *
+  "       \ echom "leaving bufname:".bufname('')
+  "       \|nohls|call <Sid>StopHL()
+  " autocmd BufEnter *
+  "       \ echom "entering bufname:".bufname('')
+  "       \|echom '[' &l:cursorline &l:cursorcolumn &cursorline &cursorcolumn ']'
+  "       \|echom '[' get(b:, 'splfy_cul', 'N') get(b:, 'splfy_cuc', 'N') ']'
 augroup END
 
 call <Sid>ChangedHLSearch(0, &hlsearch)
