@@ -557,7 +557,7 @@ augroup Spotlightify
         \ call <Sid>ChangedCursorLine(v:option_old, v:option_new)
   autocmd OptionSet cursorcolumn
         \ call <Sid>ChangedCursorColumn(v:option_old, v:option_new)
-  autocmd BufLeave,TabLeave *
+  autocmd BufLeave,WinLeave,TabLeave *
         \ nohls|call <Sid>StopHL()
   " autocmd BufLeave *
   "       \ echom "leaving bufname:".bufname('')
