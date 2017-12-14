@@ -282,8 +282,8 @@ function! s:CheckHL() abort
       if get(g:, 'splfy_curmatch', 1)
         " special hili for current occurrence
         call <Sid>SetSplfyCursorLineCol()
-        let target_pat = (&ic&&(!&scs||match(@/,'\C\u')==-1)?'\c':'\c').
-              \ '\%#\%('.@/.'\)'
+        let target_pat = (&ic&&(!&scs||match(@/,'\C\u')==-1)?'\c':'\C').
+              \ (@/[0:1] is '\v' ? '\v%#%('.@/[2:].')' : '\%#\%('.@/.'\)')
         if !exists('b:splfy_matches')
           let b:splfy_matches = {}
         endif
